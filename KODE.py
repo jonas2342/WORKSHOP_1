@@ -3,14 +3,13 @@ import os
 
 # --- Klasser ---
 class Person:
-    def __init__(self, navn, alder, pensionist, indkomst):
+    def __init__(self, navn, alder, adresse):
         self.navn = navn
         self.alder = alder
-        self.pensionist = pensionist
-        self.indkomst = indkomst
+        self.adresse = adresse
 
     def __str__(self):
-        return f"Navn: {self.navn}, Alder: {self.alder}, Pensionist: {self.pensionist}, Indkomst: {self.indkomst}"
+        return f"Navn: {self.navn}, Alder: {self.alder}, Adresse: {self.adresse}"
 
     @property
     def alder(self) -> int:
@@ -27,13 +26,15 @@ class Person:
         self._alder = value
         
 class Borger(Person):
-    def __init__(self, navn, alder, pensionist, modtager, husleje):
-        super().__init__(navn, alder, pensionist)
-        self.modtager = modtager
+    def __init__(self, navn, alder, pensionist, indkomst, husleje):
+        super().__init__(navn, alder, adresse)
+        self.husleje = husleje
+        self.pensionist = pensionist
+        self.indkomst = indkomst
         self.husleje = husleje
 
     def __str__(self):
-        return f"{super().__str__()}, Skole: {self.modtager}, husleje: {self.husleje}"
+        return f"{super().__str__()}, pensionist: {self.pensionist}, husleje: {self.husleje}"
 
 
 class Lærer(Person):
