@@ -25,7 +25,7 @@ class Person:
             raise ValueError("Alder kan ikke være negativ")
         self._alder = value
         
-class Lejer(Person):
+class Modtager(Person):
     def __init__(self, navn, alder, pensionist, skole, klassetrin):
         super().__init__(navn, alder, pensionist)
         self.skole = skole
@@ -80,10 +80,10 @@ def indlaes_personer_csv():
                 skole = row.get("skole", "")
                 klassetrin = row.get("klassetrin", "")
                 if skole or klassetrin:
-                    personer.append(Lejer(navn, alder, pensionist, skole, klassetrin))
+                    personer.append(Modtager(navn, alder, pensionist, skole, klassetrin))
                 else:
                     personer.append(Person(navn, alder, pensionist))
-        print(f"{len(personer)} personer/lejer indlæst fra '{filepath}'")
+        print(f"{len(personer)} personer/Modtager indlæst fra '{filepath}'")
     else:
         print("Ingen tidligere fil fundet, starter med tom liste.")
     return personer
@@ -94,7 +94,7 @@ def main():
     personer = indlaes_personer_csv()  # indlæs eksisterende CSV
 
     while True:
-        print("\n--- Person/Lejer Registrering ---")
+        print("\n--- Person/Modtager Registrering ---")
         print("1. Tilføj person")
         print("2. Vis alle personer")
         print("3. Tilføj person til indkomst")
@@ -118,32 +118,32 @@ def main():
             if not personer:
                 print("Ingen personer registreret endnu.")
             else:
-                print("\n--- Registrerede personer/Lejer ---")
+                print("\n--- Registrerede personer/Modtager ---")
                 for i, person in enumerate(personer, start=1):
                     print(f"{i}. {person}")
 
         elif valg == "3":
-            ikke_lejere = [p for p in personer if not isinstance(p, Lejer)]
-            if not ikke_lejere:
+            ikke_Modtagere = [p for p in personer if not isinstance(p, Modtager)]
+            if not ikke_Modtagere:
                 print("Ingen personer at opgradere.")
                 continue
 
-            print("\nVælg en person at opgradere til lejer:")
-            for i, person in enumerate(ikke_lejere, start=1):
+            print("\nVælg en person at opgradere til Modtager:")
+            for i, person in enumerate(ikke_Modtagere, start=1):
                 print(f"{i}. {person}")
 
             try:
                 valg_index = int(input("Nummer: ")) - 1
-                person_valgt = ikke_lejere[valg_index]
+                person_valgt = ikke_Modtagere[valg_index]
             except (ValueError, IndexError):
                 print("Ugyldigt valg.")
                 continue
 
             skole = input("Indtast skole: ")
             klassetrin = input("Indtast klassetrin: ")
-            lejer = Lejer(person_valgt.navn, person_valgt.alder, person_valgt.pensionist, skole, klassetrin)
-            personer[personer.index(person_valgt)] = lejer
-            print(f"{lejer.navn} er nu elev på {skole}, klassetrin {klassetrin}!")
+            Modtager = Modtager(person_valgt.navn, person_valgt.alder, person_valgt.pensionist, skole, klassetrin)
+            personer[personer.index(person_valgt)] = Modtager
+            print(f"{Modtager.navn} er nu elev på {skole}, klassetrin {klassetrin}!")
 
         elif valg == "4":
             gem_personer_csv(personer)
