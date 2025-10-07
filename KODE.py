@@ -26,12 +26,12 @@ class Person:
         self._alder = value
         
 class Borger(Person):
-    def __init__(self, navn, alder, pensionist, indkomst, husleje):
+    def __init__(self, navn, alder, pensionist, adresse, indkomst, husleje):
         super().__init__(navn, alder, adresse)
         self.husleje = husleje
         self.pensionist = pensionist
         self.indkomst = indkomst
-        self.husleje = husleje
+
 
     def __str__(self):
         return f"{super().__str__()}, pensionist: {self.pensionist}, husleje: {self.husleje}"
@@ -138,7 +138,7 @@ def gem_personer_csv(personer):
     # Kombiner med filnavnet
     filepath = os.path.join(script_dir, FILENAME)
     
-    felt_navn = ["navn", "alder", "pensionist", "modtager", "husleje"]
+    felt_navn = ["navn", "alder", "pensionist", "indkomst", "husleje"]
     with open(filepath, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=felt_navn)
         writer.writeheader()
@@ -147,7 +147,7 @@ def gem_personer_csv(personer):
                 "navn": p.navn,
                 "alder": p.alder,
                 "pensionist": p.pensionist,
-                "modtager": getattr(p, "modtager", ""),
+                "indkomst": getattr(p, "indkomst", ""),
                 "husleje": getattr(p, "husleje", "")
             }
             writer.writerow(row)
@@ -169,10 +169,10 @@ def indlaes_personer_csv():
                 navn = row["navn"]
                 alder = int(row["alder"])
                 pensionist = row["pensionist"]
-                modtager = row.get("modtager", "")
+                indkomst = row.get("indkomst", "")
                 husleje = row.get("husleje", "")
-                if modtager or husleje:
-                    personer.append(Borger(navn, alder, pensionist, modtager, husleje))
+                if indkomst or husleje:
+                    personer.append(Borger(navn, alder, pensionist, indkomst, husleje))
                 else:
                     personer.append(Person(navn, alder, pensionist))
         print(f"{len(personer)} personer/Borger indlæst fra '{filepath}'")
@@ -189,7 +189,7 @@ def main():
         print("\n--- Person/Borger Registrering ---")
         print("1. Tilføj person")
         print("2. Vis alle personer")
-        print("3. Tilføj person til modtager")
+        print("3. Tilføj person til indkomst")
         print("4. Gem liste som CSV")
         print("5. Afslut")
         valg = input("Vælg en mulighed: ")
@@ -231,11 +231,11 @@ def main():
                 print("Ugyldigt valg.")
                 continue
 
-            modtager = input("Indtast modtager: ")
+            indkomst = input("Indtast indkomst: ")
             husleje = input("Indtast husleje: ")
-            Borger = Borger(person_valgt.navn, person_valgt.alder, person_valgt.pensionist, modtager, husleje)
+            Borger = Borger(person_valgt.navn, person_valgt.alder, person_valgt.pensionist, indkomst, husleje)
             personer[personer.index(person_valgt)] = Borger
-            print(f"{Borger.navn} er nu Borger på {modtager}, husleje {husleje}!")
+            print(f"{Borger.navn} er nu Borger på {indkomst}, husleje {husleje}!")
 
         elif valg == "4":
             gem_personer_csv(personer)
