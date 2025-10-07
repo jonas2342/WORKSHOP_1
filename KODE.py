@@ -3,13 +3,13 @@ import os
 
 # --- Klasser ---
 class Person:
-    def __init__(self, navn, alder, køn):
+    def __init__(self, navn, alder, pensionist):
         self.navn = navn
         self.alder = alder
-        self.køn = køn
+        self.køn = pensionist
 
     def __str__(self):
-        return f"Navn: {self.navn}, Alder: {self.alder}, Køn: {self.køn}"
+        return f"Navn: {self.navn}, Alder: {self.alder}, Køn: {self.pensionist}"
 
     @property
     def alder(self) -> int:
@@ -25,9 +25,9 @@ class Person:
             raise ValueError("Alder kan ikke være negativ")
         self._alder = value
         
-class Elev(Person):
-    def __init__(self, navn, alder, køn, skole, klassetrin):
-        super().__init__(navn, alder, køn)
+class Lejer(Person):
+    def __init__(self, navn, alder, pensionist, skole, klassetrin):
+        super().__init__(navn, alder, pensionist)
         self.skole = skole
         self.klassetrin = klassetrin
 
@@ -46,7 +46,7 @@ def gem_personer_csv(personer):
     # Kombiner med filnavnet
     filepath = os.path.join(script_dir, FILENAME)
     
-    felt_navn = ["navn", "alder", "køn", "skole", "klassetrin"]
+    felt_navn = ["navn", "alder", "pensionist", "skole", "klassetrin"]
     with open(filepath, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=felt_navn)
         writer.writeheader()
@@ -54,7 +54,7 @@ def gem_personer_csv(personer):
             row = {
                 "navn": p.navn,
                 "alder": p.alder,
-                "køn": p.køn,
+                "pensionist": p.pensionist,
                 "skole": getattr(p, "skole", ""),
                 "klassetrin": getattr(p, "klassetrin", "")
             }
@@ -76,13 +76,13 @@ def indlaes_personer_csv():
             for row in reader:
                 navn = row["navn"]
                 alder = int(row["alder"])
-                køn = row["køn"]
+                pensionist = row["pensionist"]
                 skole = row.get("skole", "")
                 klassetrin = row.get("klassetrin", "")
                 if skole or klassetrin:
-                    personer.append(Elev(navn, alder, køn, skole, klassetrin))
+                    personer.append(Lejer(navn, alder, pensionist, skole, klassetrin))
                 else:
-                    personer.append(Person(navn, alder, køn))
+                    personer.append(Person(navn, alder, pensionist))
         print(f"{len(personer)} personer/elev indlæst fra '{filepath}'")
     else:
         print("Ingen tidligere fil fundet, starter med tom liste.")
@@ -105,10 +105,10 @@ def main():
         if valg == "1":
             navn = input("Indtast navn: ")
             alder = input("Indtast alder: ")
-            køn = input("Indtast køn: ")
+            pensionist = input("Indtast pensionist: ")
             try:
                 alder = int(alder)
-                p = Person(navn, alder, køn)
+                p = Person(navn, alder, pensionist)
                 personer.append(p)
                 print("Person tilføjet!")
             except ValueError:
@@ -118,32 +118,32 @@ def main():
             if not personer:
                 print("Ingen personer registreret endnu.")
             else:
-                print("\n--- Registrerede personer/elev ---")
+                print("\n--- Registrerede personer/Lejer ---")
                 for i, person in enumerate(personer, start=1):
                     print(f"{i}. {person}")
 
         elif valg == "3":
-            ikke_elever = [p for p in personer if not isinstance(p, Elev)]
-            if not ikke_elever:
+            ikke_lejere = [p for p in personer if not isinstance(p, Lejer)]
+            if not ikke_lejere:
                 print("Ingen personer at opgradere.")
                 continue
 
             print("\nVælg en person at opgradere til elev:")
-            for i, person in enumerate(ikke_elever, start=1):
+            for i, person in enumerate(ikke_lejere, start=1):
                 print(f"{i}. {person}")
 
             try:
                 valg_index = int(input("Nummer: ")) - 1
-                person_valgt = ikke_elever[valg_index]
+                person_valgt = ikke_lejere[valg_index]
             except (ValueError, IndexError):
                 print("Ugyldigt valg.")
                 continue
 
             skole = input("Indtast skole: ")
             klassetrin = input("Indtast klassetrin: ")
-            elev = Elev(person_valgt.navn, person_valgt.alder, person_valgt.køn, skole, klassetrin)
-            personer[personer.index(person_valgt)] = elev
-            print(f"{elev.navn} er nu elev på {skole}, klassetrin {klassetrin}!")
+            lejer = Lejer(person_valgt.navn, person_valgt.alder, person_valgt.pensionist, skole, klassetrin)
+            personer[personer.index(person_valgt)] = lejer
+            print(f"{lejer.navn} er nu elev på {skole}, klassetrin {klassetrin}!")
 
         elif valg == "4":
             gem_personer_csv(personer)
