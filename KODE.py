@@ -1,5 +1,6 @@
 import csv
 import os
+import re  # ← TILFØJET: Nødvendig for email-validering i Lærer klassen
 
 # --- Klasser ---
 class Person:
@@ -26,15 +27,14 @@ class Person:
         self._alder = value
         
 class Borger(Person):
-    def __init__(self, navn, alder, pensionist, adresse, indkomst, husleje):
+    def __init__(self, navn, alder, adresse, pensionist, indkomst, husleje):  # ← RETTET rækkefølge
         super().__init__(navn, alder, adresse)
         self.husleje = husleje
         self.pensionist = pensionist
         self.indkomst = indkomst
 
-
     def __str__(self):
-        return f"{super().__str__()}, pensionist: {self.pensionist}, husleje: {self.husleje}"
+        return f"{super().__str__()}, Pensionist: {self.pensionist}, Indkomst: {self.indkomst}, Husleje: {self.husleje}"
 
 
 class Lærer(Person):
@@ -42,8 +42,8 @@ class Lærer(Person):
     Lærer-klasse der udvider Person med email, telefon og fag.
     Demonstrerer properties med validering for at beskytte data-integritet.
     """
-    def __init__(self, navn, alder, køn, email, telefon, fag=None):
-        super().__init__(navn, alder, køn)
+    def __init__(self, navn, alder, adresse, email, telefon, fag=None):  # ← RETTET: adresse i stedet for køn
+        super().__init__(navn, alder, adresse)
         # Brug properties - dette kalder automatisk setters med validering
         self.email = email
         self.telefon = telefon
@@ -125,20 +125,16 @@ class Lærer(Person):
                 f"Telefon: {self.telefon}, Fag: {fag_tekst}")
 
 
-
-
 # --- Filnavn ---
 FILENAME = "personliste.csv"
 
 
 # --- Gem listen til CSV ---
 def gem_personer_csv(personer):
-    # Find mappen hvor .py filen ligger
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    # Kombiner med filnavnet
     filepath = os.path.join(script_dir, FILENAME)
     
-    felt_navn = ["navn", "alder", "pensionist", "indkomst", "husleje"]
+    felt_navn = ["navn", "alder", "adresse", "pensionist", "indkomst", "husleje"]  # ← RETTET: adresse tilføjet
     with open(filepath, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=felt_navn)
         writer.writeheader()
@@ -146,7 +142,8 @@ def gem_personer_csv(personer):
             row = {
                 "navn": p.navn,
                 "alder": p.alder,
-                "pensionist": p.pensionist,
+                "adresse": p.adresse,  # ← TILFØJET
+                "pensionist": getattr(p, "pensionist", ""),
                 "indkomst": getattr(p, "indkomst", ""),
                 "husleje": getattr(p, "husleje", "")
             }
@@ -156,9 +153,7 @@ def gem_personer_csv(personer):
 
 # --- Indlæs liste fra CSV ---
 def indlaes_personer_csv():
-    # Find mappen hvor .py filen ligger
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    # Kombiner med filnavnet
     filepath = os.path.join(script_dir, FILENAME)
     
     personer = []
@@ -168,14 +163,16 @@ def indlaes_personer_csv():
             for row in reader:
                 navn = row["navn"]
                 alder = int(row["alder"])
-                pensionist = row["pensionist"]
+                adresse = row.get("adresse", "")  # ← TILFØJET
+                pensionist = row.get("pensionist", "")
                 indkomst = row.get("indkomst", "")
                 husleje = row.get("husleje", "")
+                
                 if indkomst or husleje:
-                    personer.append(Borger(navn, alder, pensionist, indkomst, husleje))
+                    personer.append(Borger(navn, alder, adresse, pensionist, indkomst, husleje))  # ← RETTET
                 else:
-                    personer.append(Person(navn, alder, pensionist))
-        print(f"{len(personer)} personer/Borger indlæst fra '{filepath}'")
+                    personer.append(Person(navn, alder, adresse))  # ← RETTET
+        print(f"{len(personer)} personer/Borgere indlæst fra '{filepath}'")
     else:
         print("Ingen tidligere fil fundet, starter med tom liste.")
     return personer
@@ -183,24 +180,24 @@ def indlaes_personer_csv():
 
 # --- Terminalprogram ---
 def main():
-    personer = indlaes_personer_csv()  # indlæs eksisterende CSV
+    personer = indlaes_personer_csv()
 
     while True:
         print("\n--- Person/Borger Registrering ---")
         print("1. Tilføj person")
         print("2. Vis alle personer")
-        print("3. Tilføj person til indkomst")
+        print("3. Opgrader person til Borger")  # ← RETTET tekst
         print("4. Gem liste som CSV")
         print("5. Afslut")
         valg = input("Vælg en mulighed: ")
 
         if valg == "1":
             navn = input("Indtast navn: ")
-            alder = input("Indtast alder: ")
-            pensionist = input("Indtast pensionist: ")
+            alder_input = input("Indtast alder: ")
+            adresse = input("Indtast adresse: ")  # ← TILFØJET
             try:
-                alder = int(alder)
-                p = Person(navn, alder, pensionist)
+                alder = int(alder_input)
+                p = Person(navn, alder, adresse)  # ← RETTET
                 personer.append(p)
                 print("Person tilføjet!")
             except ValueError:
@@ -210,32 +207,36 @@ def main():
             if not personer:
                 print("Ingen personer registreret endnu.")
             else:
-                print("\n--- Registrerede personer/Borger ---")
+                print("\n--- Registrerede personer/Borgere ---")
                 for i, person in enumerate(personer, start=1):
                     print(f"{i}. {person}")
 
         elif valg == "3":
-            ikke_Borgere = [p for p in personer if not isinstance(p, Borger)]
-            if not ikke_Borgere:
+            ikke_borgere = [p for p in personer if not isinstance(p, Borger)]
+            if not ikke_borgere:
                 print("Ingen personer at opgradere.")
                 continue
 
             print("\nVælg en person at opgradere til Borger:")
-            for i, person in enumerate(ikke_Borgere, start=1):
+            for i, person in enumerate(ikke_borgere, start=1):
                 print(f"{i}. {person}")
 
             try:
                 valg_index = int(input("Nummer: ")) - 1
-                person_valgt = ikke_Borgere[valg_index]
+                person_valgt = ikke_borgere[valg_index]
             except (ValueError, IndexError):
                 print("Ugyldigt valg.")
                 continue
 
+            pensionist = input("Er personen pensionist? (ja/nej): ")
             indkomst = input("Indtast indkomst: ")
             husleje = input("Indtast husleje: ")
-            Borger = Borger(person_valgt.navn, person_valgt.alder, person_valgt.pensionist, indkomst, husleje)
-            personer[personer.index(person_valgt)] = Borger
-            print(f"{Borger.navn} er nu Borger på {indkomst}, husleje {husleje}!")
+            
+            # ← RETTET: Korrekt rækkefølge og parameter
+            borger = Borger(person_valgt.navn, person_valgt.alder, person_valgt.adresse, 
+                           pensionist, indkomst, husleje)
+            personer[personer.index(person_valgt)] = borger
+            print(f"{borger.navn} er nu Borger!")
 
         elif valg == "4":
             gem_personer_csv(personer)
