@@ -26,13 +26,13 @@ class Person:
         self._alder = value
         
 class Lejer(Person):
-    def __init__(self, navn, alder, pensionist, indkomst, klassetrin):
+    def __init__(self, navn, alder, pensionist, skole, klassetrin):
         super().__init__(navn, alder, pensionist)
-        self.indkomst = indkomst
+        self.skole = skole
         self.klassetrin = klassetrin
 
     def __str__(self):
-        return f"{super().__str__()}, Indkomst: {self.indkomst}, Klassetrin: {self.klassetrin}"
+        return f"{super().__str__()}, Skole: {self.skole}, Klassetrin: {self.klassetrin}"
 
 
 # --- Filnavn ---
@@ -46,7 +46,7 @@ def gem_personer_csv(personer):
     # Kombiner med filnavnet
     filepath = os.path.join(script_dir, FILENAME)
     
-    felt_navn = ["navn", "alder", "pensionist", "indkomst", "klassetrin"]
+    felt_navn = ["navn", "alder", "pensionist", "skole", "klassetrin"]
     with open(filepath, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=felt_navn)
         writer.writeheader()
@@ -55,7 +55,7 @@ def gem_personer_csv(personer):
                 "navn": p.navn,
                 "alder": p.alder,
                 "pensionist": p.pensionist,
-                "indkomst": getattr(p, "indkomst", ""),
+                "skole": getattr(p, "skole", ""),
                 "klassetrin": getattr(p, "klassetrin", "")
             }
             writer.writerow(row)
@@ -77,10 +77,10 @@ def indlaes_personer_csv():
                 navn = row["navn"]
                 alder = int(row["alder"])
                 pensionist = row["pensionist"]
-                indkomst = row.get("indkomst", "")
+                skole = row.get("skole", "")
                 klassetrin = row.get("klassetrin", "")
-                if indkomst or klassetrin:
-                    personer.append(Lejer(navn, alder, pensionist, indkomst, klassetrin))
+                if skole or klassetrin:
+                    personer.append(Lejer(navn, alder, pensionist, skole, klassetrin))
                 else:
                     personer.append(Person(navn, alder, pensionist))
         print(f"{len(personer)} personer/lejer indlæst fra '{filepath}'")
@@ -139,11 +139,11 @@ def main():
                 print("Ugyldigt valg.")
                 continue
 
-            indkomst = input("Indtast indkomst: ")
+            skole = input("Indtast skole: ")
             klassetrin = input("Indtast klassetrin: ")
-            lejer = Lejer(person_valgt.navn, person_valgt.alder, person_valgt.pensionist, indkomst, klassetrin)
+            lejer = Lejer(person_valgt.navn, person_valgt.alder, person_valgt.pensionist, skole, klassetrin)
             personer[personer.index(person_valgt)] = lejer
-            print(f"{lejer.navn} er nu Lejer på {indkomst}, klassetrin {klassetrin}!")
+            print(f"{lejer.navn} er nu elev på {skole}, klassetrin {klassetrin}!")
 
         elif valg == "4":
             gem_personer_csv(personer)
