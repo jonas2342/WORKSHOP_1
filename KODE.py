@@ -3,13 +3,14 @@ import os
 
 # --- Klasser ---
 class Person:
-    def __init__(self, navn, alder, pensionist):
+    def __init__(self, navn, alder, pensionist, indkomst):
         self.navn = navn
         self.alder = alder
         self.pensionist = pensionist
+        self.indkomst = indkomst
 
     def __str__(self):
-        return f"Navn: {self.navn}, Alder: {self.alder}, Pensionist: {self.pensionist}"
+        return f"Navn: {self.navn}, Alder: {self.alder}, Pensionist: {self.pensionist}, Indkomst: {self.indkomst}"
 
     @property
     def alder(self) -> int:
@@ -25,14 +26,104 @@ class Person:
             raise ValueError("Alder kan ikke være negativ")
         self._alder = value
         
-class Lejer(Person):
-    def __init__(self, navn, alder, pensionist, indkomst, husleje):
+class Borger(Person):
+    def __init__(self, navn, alder, pensionist, modtager, husleje):
         super().__init__(navn, alder, pensionist)
-        self.indkomst = indkomst
+        self.modtager = modtager
         self.husleje = husleje
 
     def __str__(self):
-        return f"{super().__str__()}, Skole: {self.indkomst}, husleje: {self.husleje}"
+        return f"{super().__str__()}, Skole: {self.modtager}, husleje: {self.husleje}"
+
+
+class Lærer(Person):
+    """
+    Lærer-klasse der udvider Person med email, telefon og fag.
+    Demonstrerer properties med validering for at beskytte data-integritet.
+    """
+    def __init__(self, navn, alder, køn, email, telefon, fag=None):
+        super().__init__(navn, alder, køn)
+        # Brug properties - dette kalder automatisk setters med validering
+        self.email = email
+        self.telefon = telefon
+        self._fag = fag if fag else []
+    
+    @property
+    def email(self):
+        """
+        Getter for email - returnerer den interne værdi.
+        """
+        return self._email
+    
+    @email.setter
+    def email(self, value):
+        """
+        Setter for email med validering.
+        Sikrer at emailen har et gyldigt format (noget@noget.noget).
+        """
+        if not isinstance(value, str):
+            raise TypeError("Email skal være tekst")
+        
+        # Regex mønster for email-validering
+        email_mønster = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+        if not re.match(email_mønster, value):
+            raise ValueError("Email skal have formatet: navn@domæne.dk")
+        
+        self._email = value
+    
+    @property
+    def telefon(self):
+        """Getter for telefon - returnerer formateret telefonnummer."""
+        return self._telefon
+    
+    @telefon.setter
+    def telefon(self, value):
+        """
+        Setter for telefon med validering og formatering.
+        Accepterer forskellige input-formater men standardiserer til ét format.
+        """
+        # Fjern mellemrum og bindestreger for at standardisere
+        renset = value.replace(" ", "").replace("-", "")
+        
+        # Validér at det kun er tal
+        if not renset.isdigit():
+            raise ValueError("Telefonnummer må kun indeholde tal")
+        
+        # Validér længde (dansk telefonnummer = 8 cifre)
+        if len(renset) != 8:
+            raise ValueError("Dansk telefonnummer skal være 8 cifre")
+        
+        # Gem i standardformat for læsbarhed: XX XX XX XX
+        self._telefon = f"{renset[:2]} {renset[2:4]} {renset[4:6]} {renset[6:]}"
+    
+    @property
+    def fag(self):
+        """
+        Getter for fag - returnerer en kopi så den interne liste ikke kan ændres direkte.
+        Dette beskytter vores data - brugere skal bruge tilføj_fag() og fjern_fag().
+        """
+        return self._fag.copy()
+    
+    def tilføj_fag(self, fag_navn):
+        """Tilføj et fag til lærerens fagliste hvis det ikke allerede findes."""
+        if fag_navn not in self._fag:
+            self._fag.append(fag_navn)
+            return True
+        return False
+    
+    def fjern_fag(self, fag_navn):
+        """Fjern et fag fra lærerens fagliste hvis det findes."""
+        if fag_navn in self._fag:
+            self._fag.remove(fag_navn)
+            return True
+        return False
+    
+    def __str__(self):
+        fag_tekst = ", ".join(self._fag) if self._fag else "Ingen fag tildelt"
+        return (f"{super().__str__()}, Email: {self.email}, "
+                f"Telefon: {self.telefon}, Fag: {fag_tekst}")
+
+
 
 
 # --- Filnavn ---
@@ -46,7 +137,7 @@ def gem_personer_csv(personer):
     # Kombiner med filnavnet
     filepath = os.path.join(script_dir, FILENAME)
     
-    felt_navn = ["navn", "alder", "pensionist", "indkomst", "husleje"]
+    felt_navn = ["navn", "alder", "pensionist", "modtager", "husleje"]
     with open(filepath, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=felt_navn)
         writer.writeheader()
@@ -55,7 +146,7 @@ def gem_personer_csv(personer):
                 "navn": p.navn,
                 "alder": p.alder,
                 "pensionist": p.pensionist,
-                "indkomst": getattr(p, "indkomst", ""),
+                "modtager": getattr(p, "modtager", ""),
                 "husleje": getattr(p, "husleje", "")
             }
             writer.writerow(row)
@@ -77,13 +168,13 @@ def indlaes_personer_csv():
                 navn = row["navn"]
                 alder = int(row["alder"])
                 pensionist = row["pensionist"]
-                indkomst = row.get("indkomst", "")
+                modtager = row.get("modtager", "")
                 husleje = row.get("husleje", "")
-                if indkomst or husleje:
-                    personer.append(Lejer(navn, alder, pensionist, indkomst, husleje))
+                if modtager or husleje:
+                    personer.append(Borger(navn, alder, pensionist, modtager, husleje))
                 else:
                     personer.append(Person(navn, alder, pensionist))
-        print(f"{len(personer)} personer/lejer indlæst fra '{filepath}'")
+        print(f"{len(personer)} personer/Borger indlæst fra '{filepath}'")
     else:
         print("Ingen tidligere fil fundet, starter med tom liste.")
     return personer
@@ -94,10 +185,10 @@ def main():
     personer = indlaes_personer_csv()  # indlæs eksisterende CSV
 
     while True:
-        print("\n--- Person/Lejer Registrering ---")
+        print("\n--- Person/Borger Registrering ---")
         print("1. Tilføj person")
         print("2. Vis alle personer")
-        print("3. Tilføj person til indkomst")
+        print("3. Tilføj person til modtager")
         print("4. Gem liste som CSV")
         print("5. Afslut")
         valg = input("Vælg en mulighed: ")
@@ -118,32 +209,32 @@ def main():
             if not personer:
                 print("Ingen personer registreret endnu.")
             else:
-                print("\n--- Registrerede personer/Lejer ---")
+                print("\n--- Registrerede personer/Borger ---")
                 for i, person in enumerate(personer, start=1):
                     print(f"{i}. {person}")
 
         elif valg == "3":
-            ikke_lejere = [p for p in personer if not isinstance(p, Lejer)]
-            if not ikke_lejere:
+            ikke_Borgere = [p for p in personer if not isinstance(p, Borger)]
+            if not ikke_Borgere:
                 print("Ingen personer at opgradere.")
                 continue
 
-            print("\nVælg en person at opgradere til lejer:")
-            for i, person in enumerate(ikke_lejere, start=1):
+            print("\nVælg en person at opgradere til Borger:")
+            for i, person in enumerate(ikke_Borgere, start=1):
                 print(f"{i}. {person}")
 
             try:
                 valg_index = int(input("Nummer: ")) - 1
-                person_valgt = ikke_lejere[valg_index]
+                person_valgt = ikke_Borgere[valg_index]
             except (ValueError, IndexError):
                 print("Ugyldigt valg.")
                 continue
 
-            indkomst = input("Indtast indkomst: ")
+            modtager = input("Indtast modtager: ")
             husleje = input("Indtast husleje: ")
-            lejer = Lejer(person_valgt.navn, person_valgt.alder, person_valgt.pensionist, indkomst, husleje)
-            personer[personer.index(person_valgt)] = lejer
-            print(f"{lejer.navn} er nu lejer på {indkomst}, husleje {husleje}!")
+            Borger = Borger(person_valgt.navn, person_valgt.alder, person_valgt.pensionist, modtager, husleje)
+            personer[personer.index(person_valgt)] = Borger
+            print(f"{Borger.navn} er nu Borger på {modtager}, husleje {husleje}!")
 
         elif valg == "4":
             gem_personer_csv(personer)
